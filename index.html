@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#3f4652">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Media Center">
+    <link rel="apple-touch-icon" href="assets/img/library-192.png">
+    <link rel="manifest" href="manifest.json">
+    <title>🎵Media Center🎵</title>
+    <link rel="icon" href="assets/img/library.ico" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"
+        integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
+        integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
+        crossorigin="anonymous"></script>
+    <script src="https://static.line-scdn.net/liff/edge/versions/2.3.0/sdk.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* @font-face {
+            font-family: 'GenSenRounded TW R';
+            src: url('assets/fonts/GenSenRounded-R.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        } */
+
+        @media (max-width: 414px) {
+            .web-bottom-image {
+                content: url('assets/img/web_bottom_small.png');
+            }
+
+            .web-top-image {
+                content: url('assets/img/web_top_ebook_small.png');
+            }
+
+            .semi-transparent {
+                font-size: 1rem;
+            }
+
+            .text-desktop {
+            display: none;
+        }
+
+            .text-mobile {
+            display: block;
+                text-align: left;
+            }
+        }
+
+        @media (min-width:768px) {
+            .w-md-50 {
+                width: 60% !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <img src="assets/img/web_top_ebook.png" class="web-top-image" alt="Web Top Image">
+    <div class="container mt-1 mb-2 mb-md-5">
+        <div class="row justify-content-center">
+            <div class="col-6 col-md-3">
+                <select class="form-select form-select-lg" id="school">
+                    <!-- 學校選項將透過 JavaScript 動態生成 -->
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                <select class="form-select form-select-lg" id="class" placeholder="選學校">
+                    <!-- 班級選項將透過 JavaScript 動態生成 -->
+                </select>
+            </div>
+        </div>
+
+        </div>
+
+    <div class="container text-center my-5 w-md-50">
+        <div id="albums" class="row card-view">
+            <!-- 書本資訊將透過 JavaScript 動態生成 -->
+            </div>
+        </div>
+    <img src="assets/img/web_bottom.png" class="web-bottom-image" alt="Web Bottom Image">
+
+    <!-- 模態框 -->
+    <div class="modal fade" id="videoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content bg-black">
+                <div class="modal-body d-flex justify-content-center align-items-center">
+                    <!-- 底部懸浮工具列 -->
+                    <div class="bottom-toolbar">
+                        <button type="button" id="reverse-order-btn" class="toolbar-btn" title="翻轉播放順序" aria-label="翻轉播放順序">
+                            <i class="fas fa-sort"></i>
+                        </button>
+                        <button type="button" class="toolbar-btn" data-bs-dismiss="modal" title="關閉播放器">
+                            <i class="fas fa-times"></i>
+                            <span>關閉</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Player Container -->
+                    <div id="player-container">
+                        <!-- YouTube Player / Audio Cover -->
+                        <div id="player"></div>
+                        
+                        <!-- Hidden Audio Player Element -->
+                        <audio id="audio-player-element" style="display: none;"></audio>
+
+                        <!-- Custom Controls -->
+                        <div id="custom-controls" class="glass-toolbar">
+                            <div id="now-playing-container" class="now-playing is-empty" role="status" aria-live="polite">
+                                <span id="now-playing-title">目前沒有播放內容</span>
+                            </div>
+                            <!-- Custom Progress Bar -->
+                            <div id="custom-progress-bar-container">
+                                <div id="progress-tooltip">0:00</div>
+                                <div id="custom-progress-bar"></div>
+                                <div id="progress-bar-thumb"></div>
+                            </div>
+                            <div class="control-row">
+                                <div class="playback-controls">
+                                    <button id="prev-btn" class="btn btn-control"><i class="fas fa-step-backward"></i></button>
+                                    <button id="play-pause-btn" class="btn btn-control"><i class="fas fa-play"></i></button>
+                                    <button id="next-btn" class="btn btn-control"><i class="fas fa-step-forward"></i></button>
+                                </div>
+                                <div id="duration-display">
+                                    <div id="current-time">0:00</div>
+                                    <div id="total-duration">0:00</div>
+                                </div>
+        </div>
+    </div>
+
+                        <!-- Custom Playlist -->
+                        <div id="custom-playlist">
+                            <!-- Playlist items will be dynamically injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button id="scrollTopBtn">回頂端</button>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script type="text/javascript" src="script.js?v=1.0.1"></script>
+</body>
+
+</html>

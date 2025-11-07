@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Drive 音樂播放器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .setup {
+            padding: 20px 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            padding: 12px 30px;
+            background: #f8f9fa;
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .file-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px 30px;
+        }
+
+        .file-item {
+            padding: 15px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .file-item.playing {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        .file-icon {
+            font-size: 24px;
+        }
+
+        .file-name {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .player {
+            padding: 30px;
+            background: #f8f9fa;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .now-playing {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            min-height: 24px;
+        }
+
+        audio {
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .empty-state {
+            padding: 60px 30px;
+            text-align: center;
+            color: #999;
+        }
+
+        .empty-state .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state .message {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state .sub-message {
+            font-size: 14px;
+        }
+
+        /* 滾動條美化 */
+        .file-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .file-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .file-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .file-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Google Drive 音樂播放器</h1>
+            <p>簡單的音頻檔案瀏覽與播放</p>
+        </div>
+
+        <div class="setup">
+            <div class="input-group">
+                <label>🔑 Google API Key</label>
+                <input type="text" id="apiKey" value="AIzaSyBZwyx0cuydOG5wTYzY5PUBfhy3gibLxkA" placeholder="輸入你的 API Key">
+                <div class="hint">用於存取 Google Drive API</div>
+            </div>
+
+            <div class="input-group">
+                <label>📁 資料夾 ID</label>
+                <input type="text" id="folderId" placeholder="輸入 Google Drive 資料夾 ID">
+                <div class="hint">從資料夾分享連結中取得 ID：https://drive.google.com/drive/folders/<strong>FOLDER_ID</strong></div>
+            </div>
+
+            <button onclick="loadFiles()">載入檔案</button>
+        </div>
+
+        <div id="status" class="status">
+            請輸入 API Key 和資料夾 ID，然後點擊「載入檔案」
+        </div>
+
+        <div id="fileList" class="file-list" style="display:none;"></div>
+
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <div class="icon">🎼</div>
+            <div class="message">沒有找到音頻檔案</div>
+            <div class="sub-message">請確認資料夾中包含音頻檔案（MP3、WAV、OGG、M4A 等）</div>
+        </div>
+
+        <div class="player">
+            <div id="nowPlaying" class="now-playing">等待播放...</div>
+            <audio id="audioPlayer" controls>
+            您的瀏覽器不支援音訊播放。
+        </audio>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = document.getElementById('apiKey');
+        const FOLDER_ID = document.getElementById('folderId');
+        const fileListEl = document.getElementById('fileList');
+        const statusEl = document.getElementById('status');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const nowPlaying = document.getElementById('nowPlaying');
+        const emptyState = document.getElementById('emptyState');
+
+        let currentFiles = [];
+        let currentPlayingIndex = -1;
+
+        // 支援的音頻格式
+        const AUDIO_MIMETYPES = [
+            'audio/mpeg',      // MP3
+            'audio/mp3',
+            'audio/wav',
+            'audio/wave',
+            'audio/x-wav',
+            'audio/ogg',
+            'audio/mp4',
+            'audio/x-m4a',
+            'audio/aac',
+            'audio/flac',
+            'audio/webm'
+        ];
+
+        const AUDIO_EXTENSIONS = ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac', '.opus', '.weba'];
+
+        function showStatus(message, type = '') {
+            statusEl.textContent = message;
+            statusEl.className = 'status ' + type;
+            statusEl.style.display = 'block';
+        }
+
+        function isAudioFile(file) {
+            // 檢查 MIME type
+            if (file.mimeType && AUDIO_MIMETYPES.includes(file.mimeType)) {
+                return true;
+            }
+            // 檢查副檔名
+            const fileName = file.name.toLowerCase();
+            return AUDIO_EXTENSIONS.some(ext => fileName.endsWith(ext));
+        }
+
+        async function loadFiles() {
+            const apiKey = API_KEY.value.trim();
+            const folderId = FOLDER_ID.value.trim();
+
+            if (!apiKey || !folderId) {
+                showStatus('❌ 請輸入 API Key 和資料夾 ID', 'error');
+                return;
+            }
+
+            showStatus('⏳ 載入檔案中...', 'loading');
+            fileListEl.style.display = 'none';
+            emptyState.style.display = 'none';
+
+            try {
+                let allFiles = [];
+                let pageToken = null;
+                let pageCount = 0;
+
+                // 使用分頁載入所有檔案
+                do {
+                    pageCount++;
+                    showStatus(`⏳ 載入檔案中... (第 ${pageCount} 頁，已載入 ${allFiles.length} 個檔案)`, 'loading');
+
+                    // 構建 API URL，每頁最多 1000 個檔案
+                    let url = `https://www.googleapis.com/drive/v3/files?` +
+                        `q='${folderId}'+in+parents+and+trashed=false` +
+                        `&key=${apiKey}` +
+                        `&fields=nextPageToken,files(id,name,mimeType,size)` +
+                        `&pageSize=1000` +
+                        `&orderBy=name`;
+
+                    // 如果有下一頁的 token，加入到請求中
+                    if (pageToken) {
+                        url += `&pageToken=${pageToken}`;
+                    }
+
+                    const response = await fetch(url);
+                    
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error?.message || '載入失敗');
+                    }
+
+                    const data = await response.json();
+                    
+                    // 收集這一頁的檔案
+                    if (data.files && data.files.length > 0) {
+                        allFiles = allFiles.concat(data.files);
+                    }
+
+                    // 取得下一頁的 token
+                    pageToken = data.nextPageToken;
+
+                } while (pageToken); // 如果有下一頁，繼續載入
+
+                // 過濾出音頻檔案
+                currentFiles = allFiles.filter(isAudioFile);
+
+                if (currentFiles.length === 0) {
+                    showStatus(`📁 資料夾中沒有找到音頻檔案（共掃描 ${allFiles.length} 個檔案）`, 'error');
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                showStatus(`✅ 成功載入 ${currentFiles.length} 個音頻檔案（共掃描 ${allFiles.length} 個檔案，${pageCount} 頁）`, 'success');
+                displayFiles();
+
+            } catch (error) {
+                showStatus(`❌ 錯誤: ${error.message}`, 'error');
+                console.error('Error loading files:', error);
+            }
+        }
+
+        function displayFiles() {
+            fileListEl.innerHTML = '';
+            fileListEl.style.display = 'block';
+
+            currentFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div class="file-icon">🎵</div>
+                    <div class="file-name">${escapeHtml(file.name)}</div>
+                `;
+                
+                fileItem.onclick = () => playFile(index);
+                fileListEl.appendChild(fileItem);
+            });
+        }
+
+        function playFile(index) {
+            const file = currentFiles[index];
+            const apiKey = API_KEY.value.trim();
+
+            // 更新當前播放狀態
+            currentPlayingIndex = index;
+            updatePlayingUI();
+
+            // 構建播放 URL (使用 alt=media 來直接取得檔案內容)
+            const playUrl = `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media&key=${apiKey}`;
+
+            // 設定音訊播放器
+            audioPlayer.src = playUrl;
+            audioPlayer.play().catch(error => {
+                showStatus(`❌ 播放失敗: ${error.message}`, 'error');
+                console.error('Play error:', error);
+            });
+
+            nowPlaying.textContent = `正在播放：${file.name}`;
+        }
+
+        function updatePlayingUI() {
+            const items = document.querySelectorAll('.file-item');
+            items.forEach((item, index) => {
+                if (index === currentPlayingIndex) {
+                    item.classList.add('playing');
+                } else {
+                    item.classList.remove('playing');
+                }
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 音訊播放器事件
+        audioPlayer.onended = () => {
+            // 自動播放下一首
+            if (currentPlayingIndex < currentFiles.length - 1) {
+                playFile(currentPlayingIndex + 1);
+            } else {
+                nowPlaying.textContent = '播放完畢';
+                currentPlayingIndex = -1;
+                updatePlayingUI();
+            }
+        };
+
+        audioPlayer.onerror = (e) => {
+            showStatus('❌ 音訊載入失敗，請確認檔案權限設定為「知道連結的人」', 'error');
+            console.error('Audio error:', e);
+        };
+
+        // 支援鍵盤快捷鍵
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' && currentPlayingIndex < currentFiles.length - 1) {
+                e.preventDefault();
+                playFile(currentPlayingIndex + 1);
+            } else if (e.key === 'ArrowUp' && currentPlayingIndex > 0) {
+                e.preventDefault();
+                playFile(currentPlayingIndex - 1);
+            } else if (e.key === ' ' && currentFiles.length > 0) {
+                e.preventDefault();
+                if (audioPlayer.paused) {
+                    audioPlayer.play();
+                } else {
+                    audioPlayer.pause();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "short_name": "Media Center",
+  "name": "多媒體中心-Media Center",
+  "icons": [
+    {
+      "src": "assets/img/library.ico", 
+      "type": "image/x-icon",
+      "sizes": "64x64 32x32 24x24 16x16"
+    },
+    {
+      "src": "assets/img/library-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "assets/img/library-512.png", 
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/img/library-1024.png",
+      "type": "image/png", 
+      "sizes": "1024x1024"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#3f4652",
+  "background_color": "#ffffff"
+} 

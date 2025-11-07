@@ -366,16 +366,17 @@ body {
       position: relative;
   }
   
-  #player {
-      width: 100%;
-      height: auto;
-      aspect-ratio: 16/9;
-      flex-shrink: 0;
-      cursor: pointer;
-      overflow: hidden;
-      border-top-left-radius: 20px;
-      border-top-right-radius: 20px;
-  }
+#player {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16/9;
+    height: min(45vh, calc(100vw * 9 / 16));
+    flex-shrink: 0;
+    cursor: pointer;
+    overflow: hidden;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
   
   #custom-playlist {
       width: 100%;
@@ -443,28 +444,58 @@ body {
       z-index: 10;
   }
 
-  #now-playing-container {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: #fff;
-      text-align: left;
-  }
+#now-playing-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+    text-align: left;
+    overflow: hidden;
+    position: relative;
+}
 
-  #now-playing-title {
-      flex: 1;
-      font-size: 1.35rem;
-      font-weight: 600;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+#now-playing-title {
+    flex: 0 0 auto;
+    font-size: 1.35rem;
+    font-weight: 600;
+    white-space: nowrap;
+    display: inline-block;
+    transform: translateX(0);
   }
 
   #now-playing-container.is-empty #now-playing-title {
       font-weight: 500;
       opacity: 0.7;
+    animation: none;
+    transform: none;
+    padding-right: 0;
   }
+
+#now-playing-container:not(.is-empty) #now-playing-title {
+    animation: nowPlayingMarquee 20s linear infinite;
+    animation-delay: 1s;
+    padding-right: 100%;
+    will-change: transform;
+}
+
+@keyframes nowPlayingMarquee {
+    0%,
+    10% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #now-playing-container:not(.is-empty) #now-playing-title {
+        animation: none;
+        transform: translateX(0);
+        padding-right: 0;
+    }
+}
 
   .control-row {
       display: flex;

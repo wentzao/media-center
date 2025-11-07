@@ -196,7 +196,11 @@ body {
   /* */
   @media (max-width: 576px) {
     #youtubeEmbed {
-      height: 85vh; /* */
+      height: 85vh; 
+    }
+
+    #player {
+      height: min(15vh, calc(100vw * 9 / 16)) !important;
     }
   }
   

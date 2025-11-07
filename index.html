@@ -115,7 +115,10 @@
                         <!-- Custom Controls -->
                         <div id="custom-controls" class="glass-toolbar">
                             <div id="now-playing-container" class="now-playing is-empty" role="status" aria-live="polite">
-                                <span id="now-playing-title">目前沒有播放內容</span>
+                                <div class="marquee-track">
+                                    <span id="now-playing-title" class="marquee-item">目前沒有播放內容</span>
+                                    <span id="now-playing-title-duplicate" class="marquee-item marquee-duplicate" aria-hidden="true">目前沒有播放內容</span>
+                                </div>
                             </div>
                             <!-- Custom Progress Bar -->
                             <div id="custom-progress-bar-container">

@@ -15,6 +15,10 @@ var currentAudioIndex = -1;
 var audioPlayer = null;
 var isAudioLoading = false; // Track if audio is currently loading
 var DEFAULT_NOW_PLAYING_TEXT = '目前沒有播放內容';
+var MOBILE_NOW_PLAYING_QUERY = (typeof window !== 'undefined' && window.matchMedia) ? window.matchMedia('(max-width: 576px)') : null;
+var nowPlayingMarqueeState = { container: null, titleEl: null, duplicateEl: null, hasTitle: false };
+var nowPlayingMarqueeRaf = null;
+var nowPlayingMarqueeListenersBound = false;
 
 // This function creates an <iframe> (and YouTube player)
 // after the API code downloads.
@@ -75,6 +79,7 @@ function updatePlayPauseIcon(isPlaying) {
 function updateNowPlayingDisplay(title) {
     const container = $('#now-playing-container');
     const titleElement = $('#now-playing-title');
+    const duplicateElement = $('#now-playing-title-duplicate');
 
     if (!titleElement.length) {
         return;
@@ -83,9 +88,125 @@ function updateNowPlayingDisplay(title) {
     const hasTitle = typeof title === 'string' && title.trim().length > 0;
     const displayTitle = hasTitle ? title.trim() : DEFAULT_NOW_PLAYING_TEXT;
     titleElement.text(displayTitle);
+    if (duplicateElement.length) {
+        duplicateElement.text(displayTitle);
+    }
     if (container.length) {
         container.toggleClass('is-empty', !hasTitle);
     }
+
+    ensureNowPlayingMarqueeListeners();
+    scheduleNowPlayingMarqueeRefresh({
+        container: container.get(0),
+        titleEl: titleElement.get(0),
+        duplicateEl: duplicateElement.length ? duplicateElement.get(0) : null,
+        hasTitle
+    });
+}
+
+function ensureNowPlayingMarqueeListeners() {
+    if (nowPlayingMarqueeListenersBound) {
+        return;
+    }
+
+    nowPlayingMarqueeListenersBound = true;
+
+    $(window).on('resize orientationchange', function () {
+        scheduleNowPlayingMarqueeRefresh();
+    });
+
+    if (MOBILE_NOW_PLAYING_QUERY) {
+        const mediaHandler = function () {
+            scheduleNowPlayingMarqueeRefresh();
+        };
+
+        if (typeof MOBILE_NOW_PLAYING_QUERY.addEventListener === 'function') {
+            MOBILE_NOW_PLAYING_QUERY.addEventListener('change', mediaHandler);
+        } else if (typeof MOBILE_NOW_PLAYING_QUERY.addListener === 'function') {
+            MOBILE_NOW_PLAYING_QUERY.addListener(mediaHandler);
+        }
+    }
+}
+
+function scheduleNowPlayingMarqueeRefresh(update) {
+    if (update && typeof update === 'object') {
+        if (update.container) {
+            nowPlayingMarqueeState.container = update.container;
+        }
+        if (update.titleEl) {
+            nowPlayingMarqueeState.titleEl = update.titleEl;
+        }
+        if (Object.prototype.hasOwnProperty.call(update, 'duplicateEl')) {
+            nowPlayingMarqueeState.duplicateEl = update.duplicateEl;
+        }
+        if (Object.prototype.hasOwnProperty.call(update, 'hasTitle')) {
+            nowPlayingMarqueeState.hasTitle = update.hasTitle;
+        }
+    }
+
+    if (!nowPlayingMarqueeState.container || !nowPlayingMarqueeState.titleEl) {
+        return;
+    }
+
+    if (nowPlayingMarqueeRaf) {
+        cancelAnimationFrame(nowPlayingMarqueeRaf);
+    }
+
+    nowPlayingMarqueeRaf = requestAnimationFrame(runNowPlayingMarqueeRefresh);
+}
+
+function runNowPlayingMarqueeRefresh() {
+    nowPlayingMarqueeRaf = null;
+
+    const state = nowPlayingMarqueeState;
+    if (!state.container || !state.titleEl) {
+        return;
+    }
+
+    const track = state.container.querySelector('.marquee-track');
+    if (!track) {
+        return;
+    }
+
+    const containerWidth = state.container.clientWidth;
+    const textWidth = state.titleEl.scrollWidth;
+
+    if (state.duplicateEl) {
+        state.duplicateEl.textContent = state.titleEl.textContent;
+    }
+
+    const shouldAnimate = Boolean(state.hasTitle && textWidth > containerWidth);
+
+    if (state.duplicateEl) {
+        state.duplicateEl.style.display = shouldAnimate ? '' : 'none';
+    }
+
+    state.container.classList.toggle('marquee-enabled', shouldAnimate);
+
+    if (!shouldAnimate) {
+        state.container.style.removeProperty('--marquee-mobile-offset');
+        state.container.style.removeProperty('--marquee-duration');
+        track.style.removeProperty('transform');
+        return;
+    }
+
+    const mobileOffset = nowPlayingMobileMatches() ? Math.max((containerWidth - textWidth) / 2, 0) : 0;
+    state.container.style.setProperty('--marquee-mobile-offset', mobileOffset + 'px');
+
+    const gapValue = getComputedStyle(state.container).getPropertyValue('--marquee-gap') || '32px';
+    const parsedGap = parseFloat(gapValue);
+    const gap = isNaN(parsedGap) ? 32 : parsedGap;
+
+    const distance = textWidth + gap;
+    const speed = 70; // px per second
+    const duration = Math.max(distance / speed, 10);
+    state.container.style.setProperty('--marquee-duration', duration + 's');
+
+    track.style.removeProperty('transform');
+}
+
+function nowPlayingMobileMatches() {
+    return MOBILE_NOW_PLAYING_QUERY ? MOBILE_NOW_PLAYING_QUERY.matches : false;
 }
 
 function stopVideo() {
